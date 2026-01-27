@@ -16,7 +16,7 @@ use Psr\Log\LoggerInterface;
  */
 class Kernel implements KernelContract
 {
-    use KernelStateDemoTrait;
+
 
     protected Application $app;
     protected array $middleware = [];
@@ -58,11 +58,6 @@ class Kernel implements KernelContract
                 return $this->handleInfo($request);
             }
 
-            // Route: State Demo
-            if ($path === '/state-demo') {
-                return $this->handleStateDemo($request);
-            }
-
             // 404 Not Found
             return Response::json([
                 'error' => 'Not Found',
@@ -82,87 +77,28 @@ class Kernel implements KernelContract
      */
     protected function handleHome(Request $request): Response
     {
-        $html = <<<HTML
-        <!DOCTYPE html>
-        <html lang="vi">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Witals Framework</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                }
-                .container {
-                    text-align: center;
-                    padding: 2rem;
-                }
-                h1 {
-                    font-size: 3rem;
-                    margin-bottom: 1rem;
-                    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-                }
-                .badge {
-                    display: inline-block;
-                    padding: 0.5rem 1rem;
-                    background: rgba(255,255,255,0.2);
-                    border-radius: 20px;
-                    margin: 0.5rem;
-                    backdrop-filter: blur(10px);
-                }
-                .info {
-                    margin-top: 2rem;
-                    padding: 1.5rem;
-                    background: rgba(255,255,255,0.1);
-                    border-radius: 10px;
-                    backdrop-filter: blur(10px);
-                }
-                .links {
-                    margin-top: 2rem;
-                }
-                .links a {
-                    color: white;
-                    text-decoration: none;
-                    padding: 0.75rem 1.5rem;
-                    background: rgba(255,255,255,0.2);
-                    border-radius: 5px;
-                    margin: 0.5rem;
-                    display: inline-block;
-                    transition: all 0.3s;
-                }
-                .links a:hover {
-                    background: rgba(255,255,255,0.3);
-                    transform: translateY(-2px);
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🚀 Witals Framework</h1>
-                <div class="badge">Environment: {$this->getEnvironmentName()}</div>
-                <div class="info">
-                    <p><strong>PHP Version:</strong> {$this->getPhpVersion()}</p>
-                    <p><strong>Server:</strong> {$this->getServerInfo()}</p>
-                    <p><strong>Memory Usage:</strong> {$this->getMemoryUsage()}</p>
-                </div>
-                <div class="links">
-                    <a href="/health">Health Check</a>
-                    <a href="/info">System Info</a>
-                    <a href="/state-demo">State Demo</a>
-                </div>
-            </div>
-        </body>
-        </html>
-        HTML;
+        $modules = [];
+        if (app()->has(\App\Foundation\Module\ModuleManager::class)) {
+            $manager = app(\App\Foundation\Module\ModuleManager::class);
+            foreach ($manager->all() as $module) {
+                $modules[] = [
+                    'name' => $module->getName(),
+                    'version' => $module->getVersion(),
+                    'priority' => $module->getPriority(),
+                    'enabled' => $module->isEnabled() ? 'Yes' : 'No',
+                    'loaded' => $manager->isLoaded($module->getName()) ? 'Yes' : 'No',
+                    'path' => $module->getPath(),
+                    'type' => $module->getType(),
+                ];
+            }
+        }
 
-        return Response::html($html);
+        return Response::json([
+            'message' => 'Welcome to PrestoWorld Native!',
+            'runtime' => $this->getEnvironmentName(),
+            'modules' => $modules,
+            'wordpress_enabled' => config('modules.enabled.wordpress') ? 'Yes' : 'No',
+        ]);
     }
 
     /**

@@ -1,8 +1,9 @@
 <?php
 
 /**
- * Application Bootstrap
- * This file initializes the application and is shared across all runtimes:
+ * PrestoWorld Application Bootstrap
+ * 
+ * This file initializes the PrestoWorld application and is shared across all runtimes:
  * - Traditional (PHP-FPM/Apache/Nginx)
  * - RoadRunner
  * - ReactPHP
@@ -12,9 +13,8 @@
 
 declare(strict_types=1);
 
-use Witals\Framework\Application;
+use App\Foundation\Application;
 use Witals\Framework\Contracts\RuntimeType;
-use App\Http\Kernel;
 
 // Load environment variables
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
@@ -26,38 +26,21 @@ if (defined('WITALS_RUNTIME')) {
     $runtime = RuntimeType::from(WITALS_RUNTIME);
 }
 
-// Create application instance with auto-detected or explicit runtime
+// Create PrestoWorld application instance
 $app = new Application(
     basePath: dirname(__DIR__),
     runtime: $runtime
 );
 
-// Bind important interfaces
+// Bind HTTP Kernel
 $app->singleton(
     \Witals\Framework\Contracts\Http\Kernel::class,
     \App\Http\Kernel::class
 );
 
-// Register Enterprise Logger
-$app->singleton(\Psr\Log\LoggerInterface::class, function ($app) {
-    return new \Witals\Framework\Log\LogManager([
-        'default'  => getenv('APP_DEBUG') === 'true' ? 'debug' : 'standard',
-        'channels' => [
-            'standard' => [
-                'driver'    => 'standard',
-                'path'      => $app->basePath('storage/logs/witals.log'),
-                'buffered'  => true,
-                'formatter' => 'json', // Use JSON for enterprise log analysis
-            ],
-            'debug' => [
-                'driver' => 'debug',
-            ],
-        ],
-    ]);
-});
-
-// Register service providers
-$app->registerConfiguredProviders();
+// Load service providers from config
+$providers = $app->config('app.providers', []);
+$app->registerProviders($providers);
 
 // Configure based on runtime type
 if ($app->isLongRunning()) {
