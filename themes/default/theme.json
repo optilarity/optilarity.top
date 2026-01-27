@@ -4,6 +4,6 @@
     "description": "Modern, clean native theme for PrestoWorld CMS",
     "version": "1.0.0",
     "author": "PrestoWorld Team",
-    "type": "native",
-    "screenshot": "screenshot.png"
+    "engine": "prestoworld",
+    "type": "native"
 }

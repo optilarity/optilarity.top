@@ -5,84 +5,76 @@ declare(strict_types=1);
 namespace App\Foundation\Theme;
 
 use App\Foundation\Application;
-use App\Foundation\Theme\Contracts\ThemeInterface;
+use App\Foundation\Theme\Contracts\ThemeAdapterInterface;
+use App\Foundation\Theme\Adapters\NativeThemeAdapter;
+use App\Foundation\Theme\Adapters\WordPressThemeAdapter;
 
 class ThemeManager
 {
     protected Application $app;
     protected array $themes = [];
-    protected ?string $activeTheme = null;
+    protected ?Theme $activeTheme = null;
+    protected ?ThemeAdapterInterface $adapter = null;
 
     public function __construct(Application $app)
     {
         $this->app = $app;
     }
 
-    /**
-     * Discover themes in the themes directory
-     */
     public function discover(): void
     {
-        $themesPath = $this->app->basePath('themes');
-        
-        if (!is_dir($themesPath)) {
-            return;
-        }
+        // 1. Native Themes
+        $this->scanDirectory($this->app->basePath('themes'));
 
-        foreach (scandir($themesPath) as $dir) {
-            if ($dir === '.' || $dir === '..') {
-                continue;
-            }
+        // 2. WordPress Themes
+        $this->scanDirectory($this->app->basePath('public/wp-content/themes'));
+    }
 
-            $themePath = $themesPath . '/' . $dir;
-            $metadataPath = $themePath . '/theme.json';
+    protected function scanDirectory(string $path): void
+    {
+        if (!is_dir($path)) return;
 
-            if (file_exists($metadataPath)) {
-                $metadata = json_decode(file_get_contents($metadataPath), true);
-                $this->themes[$metadata['name']] = new Theme($this->app, $themePath, $metadata);
+        foreach (scandir($path) as $dir) {
+            if ($dir === '.' || $dir === '..') continue;
+
+            $themePath = $path . '/' . $dir;
+            if (is_dir($themePath)) {
+                $theme = new Theme($this->app, $themePath);
+                $this->themes[$theme->getName()] = $theme;
             }
         }
     }
 
-    /**
-     * Set the active theme
-     */
     public function setActiveTheme(string $name): void
     {
         if (isset($this->themes[$name])) {
-            $this->activeTheme = $name;
-            $this->themes[$name]->boot();
+            $this->activeTheme = $this->themes[$name];
+            $this->adapter = $this->resolveAdapter($this->activeTheme);
+            $this->adapter->boot($this->activeTheme);
         }
     }
 
-    /**
-     * Get the active theme instance
-     */
-    public function getActiveTheme(): ?ThemeInterface
+    protected function resolveAdapter(Theme $theme): ThemeAdapterInterface
     {
-        return $this->themes[$this->activeTheme] ?? null;
+        return match($theme->getTypeEnum()) {
+            ThemeType::NATIVE => new NativeThemeAdapter(),
+            ThemeType::FSE    => new WordPressThemeAdapter($this->app, 'fse'),
+            ThemeType::LEGACY => new WordPressThemeAdapter($this->app, 'legacy'),
+        };
     }
 
-    /**
-     * Render a view from the active theme
-     */
     public function render(string $view, array $data = []): string
     {
-        $theme = $this->getActiveTheme();
-        if (!$theme) {
-            return "No active theme.";
+        if (!$this->adapter) {
+            return "Theme Engine not initialized.";
         }
 
-        $viewPath = $theme->getPath() . '/src/views/' . str_replace('.', '/', $view) . '.php';
+        return $this->adapter->render($view, $data);
+    }
 
-        if (!file_exists($viewPath)) {
-            return "View [{$view}] not found in theme [{$theme->getName()}].";
-        }
-
-        extract($data);
-        ob_start();
-        include $viewPath;
-        return ob_get_clean();
+    public function getActiveTheme(): ?Theme
+    {
+        return $this->activeTheme;
     }
 
     public function all(): array

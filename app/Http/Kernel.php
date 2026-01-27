@@ -127,11 +127,28 @@ class Kernel implements KernelContract
         // Use Theme Engine to render if not a JSON request
         if (str_contains($request->header('accept', ''), 'text/html') || !$request->header('accept')) {
             $themeManager = $this->app->make(\App\Foundation\Theme\ThemeManager::class);
+            
+            // Allow dynamic theme switching for demo
+            $targetTheme = $request->query('theme', env('THEME_ACTIVE', 'default'));
+            $themeManager->setActiveTheme($targetTheme);
+
             $html = $themeManager->render('index', [
                 'title' => 'Home',
-                'posts' => $postsData
+                'posts' => $postsData,
+                'themes' => $themeManager->all()
             ]);
             return \Witals\Framework\Http\Response::html($html);
+        }
+
+        $themesInfo = [];
+        $themeManager = $this->app->make(\App\Foundation\Theme\ThemeManager::class);
+        foreach ($themeManager->all() as $theme) {
+            $themesInfo[] = [
+                'name' => $theme->getName(),
+                'title' => $theme->getTitle(),
+                'type' => $theme->getType(),
+                'active' => $theme->isActive()
+            ];
         }
 
         return Response::json([
@@ -140,6 +157,7 @@ class Kernel implements KernelContract
             'modules' => $modules,
             'wordpress_enabled' => config('modules.enabled.wordpress') ? 'Yes' : 'No',
             'latest_posts' => $postsData,
+            'available_themes' => $themesInfo
         ]);
     }
 
