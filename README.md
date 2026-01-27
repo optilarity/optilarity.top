@@ -1,7 +1,7 @@
 # ⚡ PrestoWorld (PW)
 
 > **The High-Performance Evolution of the Web.**
-> *A modern, MIT-licensed CMS core built on Spiral Framework & RoadRunner, designed for a seamless transition from the WordPress ecosystem.*
+> *A modern, MIT-licensed CMS core built on Witals Framework & RoadRunner, designed for a seamless transition from the WordPress ecosystem.*
 
 ---
 
@@ -9,7 +9,7 @@
 
 **PrestoWorld (PW)** is built for the pragmatists. We believe you shouldn't have to choose between cutting-edge performance and the world's largest plugin ecosystem.
 
-By re-implementing the CMS core on the **Spiral Framework**, we’ve created a "Hybrid Engine" that offers a friction-less migration path for millions of users tired of legacy bloat but dependent on their existing workflows.
+By re-implementing the CMS core on the **Witals Framework**, we’ve created a "Hybrid Engine" that offers a friction-less migration path for millions of users tired of legacy bloat but dependent on their existing workflows.
 
 ---
 
@@ -17,7 +17,7 @@ By re-implementing the CMS core on the **Spiral Framework**, we’ve created a "
 
 ### 🌀 1. Industrial-Grade Foundation
 
-Built on **Spiral Framework (PHP 8.3+)** and powered by **RoadRunner (Golang)**.
+Built on **Witals Framework (PHP 8.1+)** and powered by **RoadRunner (Golang)**.
 
 * **Stateful Performance:** Workers stay live in RAM for sub-30ms response times.
 * **Enterprise Ready:** Modern DI, PSR-compliance, and high-concurrency handling.
@@ -35,13 +35,13 @@ We don't force you to quit WordPress; we help you evolve out of it.
 
 * **WP.org Compatibility:** A dedicated bridge allows you to enable and install plugins directly from the **WordPress.org Marketplace**.
 * **The "Soft" Migration:** Move your site to PrestoWorld today, keep your essential plugins, and enjoy an immediate speed boost thanks to our RoadRunner runtime.
-* **Legacy Sandboxing:** Legacy plugins run in an isolated layer to ensure they don't compromise the stability of the Spiral core.
+* **Legacy Sandboxing:** Legacy plugins run in an isolated layer to ensure they don't compromise the stability of the Witals core.
 
 ---
 
 ## 🛠 Technical Stack
 
-* **Kernel:** Spiral Framework 3.x
+* **Kernel:** Witals Framework
 * **Runtime:** RoadRunner 2024+
 * **FSE Engine:** Refactored Elementor 2
 * **License:** **MIT** (Total freedom for you and your business)
@@ -72,4 +72,4 @@ PrestoWorld is a **Clean-room Implementation**. It contains no code from WordPre
 
 ## 🤝 Join the Evolution
 
-We are building a world where the web is fast by default. Whether you are a Spiral developer or a WordPress veteran, there is a place for you in the **PrestoWorld**.
+We are building a world where the web is fast by default. Whether you are a Witals developer or a WordPress veteran, there is a place for you in the **PrestoWorld**.
