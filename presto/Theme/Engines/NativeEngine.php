@@ -54,6 +54,7 @@ class NativeEngine extends AbstractEngine
 
         if ($viewPath && file_exists($viewPath)) {
             extract($data);
+            error_log("NativeEngine: Rendering " . basename($viewPath) . " [OB Level: " . ob_get_level() . "]");
             ob_start();
             include $viewPath;
             return ob_get_clean();

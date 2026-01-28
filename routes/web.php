@@ -2,6 +2,8 @@
 
 /** @var \App\Http\Routing\Router $router */
 
+error_log("routes/web.php: Registering routes...");
+
 // Define modern Laravel-style routes here
 $router->get('/hello-native', function() {
     return \Witals\Framework\Http\Response::html('<h1>Hello from PrestoWorld Native Route!</h1>');

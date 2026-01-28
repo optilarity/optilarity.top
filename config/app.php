@@ -47,6 +47,7 @@ return [
         
         App\Providers\RouteServiceProvider::class,
         App\Providers\ViewServiceProvider::class,
+        PrestoWorld\Admin\Providers\AdminServiceProvider::class,
         
         // Add more providers here
     ],

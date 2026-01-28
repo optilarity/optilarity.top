@@ -78,12 +78,19 @@ class DebugBar
         }
 
         // Current context (WordPress focused)
-        $context = 'None';
-        if (function_exists('get_queried_object')) {
+        $context = $GLOBALS['__presto_current_context'] ?? 'None';
+        
+        if ($this->app->has('current_context')) {
+            $context = $this->app->make('current_context');
+        }
+
+        if ($context === 'None' && function_exists('get_queried_object')) {
             try {
                 $obj = get_queried_object();
                 if ($obj) {
-                    if (isset($obj->post_title)) {
+                    if (isset($obj->title)) {
+                        $context = ($obj->type ?? 'Post') . ": " . $obj->title;
+                    } elseif (isset($obj->post_title)) {
                         $context = "Post: " . $obj->post_title;
                     } elseif (isset($obj->name)) {
                         $context = "Term: " . $obj->name;
@@ -97,7 +104,6 @@ class DebugBar
                 $context = 'Error';
             }
         }
-
         $html = "
         <!-- PrestoWorld Debug Bar -->
         <style>

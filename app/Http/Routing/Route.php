@@ -23,12 +23,21 @@ class Route
 
     public function matches(Request $request): bool
     {
-        if ($this->method !== $request->method()) {
-            return false;
+        $requestMethod = $request->method();
+        if ($this->method !== $requestMethod) {
+            // Standard: HEAD matches GET
+            if (!($this->method === 'GET' && $requestMethod === 'HEAD')) {
+                return false;
+            }
         }
 
         $pattern = $this->getRegexPattern();
-        if (preg_match($pattern, $request->path(), $matches)) {
+        $path = $request->path();
+        
+        $match = preg_match($pattern, $path, $matches);
+        // error_log("Route: Matching '{$path}' against '{$pattern}' -> " . ($match ? 'YES' : 'NO'));
+        
+        if ($match) {
             $this->parameters = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
             return true;
         }

@@ -48,8 +48,6 @@ class Kernel implements KernelContract
         ]);
 
         try {
-            // Use the Router to dispatch the request
-            // This will check native routes first, then fallback to WordPress if configured
             $router = $this->app->make(\App\Http\Routing\Router::class);
             $result = $router->dispatch($request);
 
@@ -126,9 +124,9 @@ class Kernel implements KernelContract
                 // Fetch 5 latest items (posts or pages)
                 // Note: Using select() directly from repository might check if SelectRepository is used
                 $posts = $repo->select()
-                    ->where('post_status', 'publish')
-                    ->where('post_type', 'IN', ['post', 'page'])
-                    ->orderBy('post_date', 'DESC')
+                    ->where('status', 'publish')
+                    ->where('type', 'in', ['post', 'page'])
+                    ->orderBy('date', 'DESC')
                     ->limit(5)
                     ->fetchAll();
 
@@ -138,7 +136,7 @@ class Kernel implements KernelContract
                         'title' => $post->title,
                         'type' => $post->type,
                         'slug' => $post->slug,
-                        'url' => get_permalink($post->id),
+                        'url' => get_permalink($post),
                         'date' => $post->date->format('Y-m-d H:i:s'),
                     ];
                 }

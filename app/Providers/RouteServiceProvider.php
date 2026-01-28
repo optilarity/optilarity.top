@@ -13,13 +13,14 @@ class RouteServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->singleton(Router::class, function ($app) {
-            return new Router($app);
+            return new Router($app, $app->make(\Psr\Log\LoggerInterface::class));
         });
     }
 
     public function boot(): void
     {
         $router = $this->app->make(Router::class);
+        error_log("RouteServiceProvider: Booting and loading routes...");
 
         // Set the smart fallback to WordPress if the bridge is enabled
         $wpDispatcherClass = \Prestoworld\Bridge\WordPress\Routing\WordPressDispatcher::class;
@@ -37,8 +38,7 @@ class RouteServiceProvider extends ServiceProvider
     {
         $routesFile = $this->app->basePath('routes/web.php');
         if (file_exists($routesFile)) {
-            // Make $router available in the routes file
-            $router = $router; 
+            error_log("RouteServiceProvider: Loading routes from " . $routesFile);
             require $routesFile;
         }
     }

@@ -7,16 +7,19 @@ namespace App\Http\Routing;
 use Witals\Framework\Application;
 use Witals\Framework\Http\Request;
 use Witals\Framework\Http\Response;
+use Psr\Log\LoggerInterface;
 
 class Router
 {
     protected Application $app;
+    protected \Psr\Log\LoggerInterface $logger;
     protected array $routes = [];
     protected ?\Closure $wordPressFallback = null;
 
-    public function __construct(Application $app)
+    public function __construct(Application $app, \Psr\Log\LoggerInterface $logger)
     {
         $this->app = $app;
+        $this->logger = $logger;
     }
 
     public function get(string $path, $action): Route
@@ -33,6 +36,7 @@ class Router
     {
         $route = new Route($method, $path, $action);
         $this->routes[] = $route;
+        $this->logger->debug("Router: Registered route {method} {path}", ['method' => $method, 'path' => $path]);
         return $route;
     }
 
@@ -43,11 +47,22 @@ class Router
 
     public function dispatch(Request $request): mixed
     {
+        $path = $request->path();
+        
         foreach ($this->routes as $route) {
             if ($route->matches($request)) {
+                $this->logger->info("Router: Match found for {method} {path}", [
+                    'method' => $request->method(),
+                    'path' => $path
+                ]);
                 return $this->runRoute($route, $request);
             }
         }
+
+        $this->logger->info("Router: No match for {method} {path}", [
+            'method' => $request->method(),
+            'path' => $path
+        ]);
 
         // If no native route matches, try WordPress rewrite rules
         if ($this->wordPressFallback) {
@@ -74,5 +89,10 @@ class Router
         }
 
         return $action;
+    }
+
+    public function getRoutes(): array
+    {
+        return $this->routes;
     }
 }

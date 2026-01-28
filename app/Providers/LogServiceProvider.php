@@ -24,7 +24,7 @@ class LogServiceProvider extends ServiceProvider
                         'path' => $app->basePath('storage/logs/prestoworld.log'),
                         'level' => 'info', // Show from Info and above in production log
                         'buffered' => true,
-                        'formatter' => 'json',
+                        'formatter' => 'line',
                     ],
                     'debug' => [
                         'driver' => 'debug',
