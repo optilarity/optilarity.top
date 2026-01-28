@@ -12,11 +12,9 @@ class ThemeServiceProvider extends ServiceProvider
     {
         $this->singleton(ThemeManager::class, function ($app) {
             $manager = new ThemeManager($app);
-            $manager->discover();
             
-            // Set default theme from config or env
-            $defaultTheme = env('THEME_ACTIVE', 'default');
-            $manager->setActiveTheme($defaultTheme);
+            // Register native themes path
+            $manager->addDiscoveryPath($app->basePath('themes'));
             
             return $manager;
         });
@@ -24,6 +22,12 @@ class ThemeServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Manager is already initialized in registration for discovery
+        $manager = $this->app->make(ThemeManager::class);
+        
+        $manager->discover();
+        
+        // Set default theme from config or env
+        $defaultTheme = env('THEME_ACTIVE', 'tucnguyen');
+        $manager->setActiveTheme($defaultTheme);
     }
 }

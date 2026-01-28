@@ -11,6 +11,8 @@ class ThemeManager
     protected Application $app;
     protected array $themes = [];
     protected array $engines = [];
+    protected array $discoveryPaths = [];
+    protected array $scannedPaths = [];
     protected ?Theme $activeTheme = null;
 
     public function __construct(Application $app)
@@ -20,16 +22,27 @@ class ThemeManager
 
     public function discover(): void
     {
-        // 1. Native Themes
-        $this->scanDirectory($this->app->basePath('themes'));
+        foreach ($this->discoveryPaths as $path) {
+            $this->scanDirectory($path);
+        }
+    }
 
-        // 2. WordPress Themes
-        $this->scanDirectory($this->app->basePath('public/wp-content/themes'));
+    /**
+     * Add a directory to scan for themes.
+     */
+    public function addDiscoveryPath(string $path): void
+    {
+        if (!in_array($path, $this->discoveryPaths)) {
+            $this->discoveryPaths[] = $path;
+        }
     }
 
     protected function scanDirectory(string $path): void
     {
         if (!is_dir($path)) return;
+
+        // Skip if already scanned
+        if (isset($this->scannedPaths[$path])) return;
 
         foreach (scandir($path) as $dir) {
             if ($dir === '.' || $dir === '..') continue;
@@ -38,8 +51,11 @@ class ThemeManager
             if (is_dir($themePath)) {
                 $theme = new Theme($this->app, $themePath);
                 $this->themes[$theme->getName()] = $theme;
+                // error_log("Discovered theme: " . $theme->getName() . " at " . $themePath);
             }
         }
+
+        $this->scannedPaths[$path] = true;
     }
 
     public function setActiveTheme(string $name): void
@@ -48,6 +64,8 @@ class ThemeManager
             $this->activeTheme = $this->themes[$name];
             // Boot the theme (which boots its engine and helpers)
             $this->activeTheme->boot();
+        } else {
+            // error_log("Failed to set active theme: {$name}. Available themes: " . implode(', ', array_keys($this->themes)));
         }
     }
 
@@ -65,6 +83,10 @@ class ThemeManager
 
     public function render(string $view, array $data = []): string
     {
+        if (!$this->activeTheme) {
+            $this->setActiveTheme('tucnguyen');
+        }
+
         if (!$this->activeTheme) {
             return "No active theme set.";
         }

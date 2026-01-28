@@ -117,7 +117,6 @@ class DebugBar
                 border-top: 1px solid #334155;
                 z-index: 1000000;
                 box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
-                overflow-x: auto;
                 white-space: nowrap;
             }
             .pw-db-item {
@@ -136,7 +135,44 @@ class DebugBar
             .pw-db-value { font-weight: 600; color: #818cf8; }
             .pw-db-icon { margin-right: 4px; opacity: 0.7; }
             .pw-db-highlight { color: #fbbf24; }
+            .pw-query-list {
+                display: none;
+                position: absolute;
+                bottom: 35px;
+                left: 0;
+                background: #0f172a;
+                border: 1px solid #334155;
+                padding: 10px;
+                border-radius: 4px;
+                width: 600px;
+                max-height: 400px;
+                overflow-y: auto;
+                box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.5);
+                z-index: 1000001;
+            }
+            .pw-query-list.pw-active { display: block !important; }
+            .pw-db-item:hover .pw-query-list { display: block; }
+            .pw-query-item {
+                border-bottom: 1px solid #1e293b;
+                padding: 5px 0;
+                white-space: pre-wrap;
+                font-family: 'Fira Code', monospace;
+                color: #e2e8f0;
+            }
+            .pw-query-item:last-child { border-bottom: none; }
+            .pw-query-time { color: #10b981; font-weight: bold; font-size: 10px; }
         </style>
+        <script>
+            function pwToggleQueries(event) {
+                event.stopPropagation();
+                const list = document.querySelector('.pw-query-list');
+                list.classList.toggle('pw-active');
+            }
+            document.addEventListener('click', function() {
+                const list = document.querySelector('.pw-query-list');
+                if (list) list.classList.remove('pw-active');
+            });
+        </script>
         <div id='pw-debug-bar'>
             <div class='pw-db-item'>
                 <span class='pw-db-icon'>⚡</span>
@@ -148,10 +184,20 @@ class DebugBar
                 <span class='pw-db-label'>Memory:</span>
                 <span class='pw-db-value'>" . number_format($memory, 2) . "MB</span>
             </div>
-            <div class='pw-db-item'>
+            <div class='pw-db-item' style='position: relative; cursor: pointer;' onclick='pwToggleQueries(event)'>
                 <span class='pw-db-icon'>🗄️</span>
                 <span class='pw-db-label'>Queries:</span>
                 <span class='pw-db-value'>$queryCount (" . number_format($queryTime, 2) . "ms)</span>
+                
+                <div class='pw-query-list' onclick='event.stopPropagation()'>
+                    <div style='font-weight: bold; border-bottom: 2px solid #334155; padding-bottom: 5px; margin-bottom: 5px; color: #f1f5f9;'>Executed Queries</div>
+                    " . array_reduce($this->queries, function($carry, $q) {
+                        return $carry . "<div class='pw-query-item'>
+                            <div class='pw-query-time'>[" . number_format($q['time'] * 1000, 2) . "ms]</div>
+                            <code>" . htmlspecialchars($q['sql']) . "</code>
+                        </div>";
+                    }, '') . "
+                </div>
             </div>
 
             <div class='pw-db-divider'></div>

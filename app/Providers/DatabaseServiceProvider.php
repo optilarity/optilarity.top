@@ -22,22 +22,44 @@ class DatabaseServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Register Query Interceptor
+        $this->singleton(\App\Foundation\Database\QueryInterceptor::class, function ($app) {
+            return new \App\Foundation\Database\QueryInterceptor($app->make(\App\Foundation\Debug\DebugBar::class));
+        });
+
         // 1. Register Database Manager (DBAL)
         $this->singleton(DatabaseProviderInterface::class, function ($app) {
             $config = new DatabaseConfig($app->config('database'));
-            return new DatabaseManager($config);
+            $manager = new DatabaseManager($config);
+
+            // Intercept queries for Statistics/Debug Bar
+            if (env('APP_DEBUG_BAR', false) && $app->has(\App\Foundation\Debug\DebugBar::class)) {
+                $manager->setLogger($app->make(\App\Foundation\Database\QueryInterceptor::class));
+            }
+
+            return $manager;
         });
 
         // 2. Register ORM
         $this->singleton(ORMInterface::class, function ($app) {
             $dbal = $app->make(DatabaseProviderInterface::class);
             
-            // In a real app, we should cache the schema
-            $schema = $this->getSchema($app, $dbal);
+            $cacheFile = $app->basePath('storage/framework/cache/orm_schema.php');
+            $refresh = isset($_GET['refresh_schema']) || !file_exists($cacheFile);
+
+            if (!$refresh) {
+                $schemaArray = require $cacheFile;
+            } else {
+                $schemaArray = $this->getSchema($app, $dbal);
+                
+                // Securely save the compiled schema
+                $content = "<?php\n\ndeclare(strict_types=1);\n\nreturn " . var_export($schemaArray, true) . ";\n";
+                file_put_contents($cacheFile, $content);
+            }
 
             return new ORM(
                 new Factory($dbal),
-                new ORMSchema($schema)
+                new ORMSchema($schemaArray)
             );
         });
     }

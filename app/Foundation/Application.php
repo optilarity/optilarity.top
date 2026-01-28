@@ -34,6 +34,7 @@ class Application extends BaseApplication
      * Booted service providers
      */
     protected array $bootedProviders = [];
+    protected array $config = [];
 
     /**
      * Register a service provider
@@ -113,6 +114,9 @@ class Application extends BaseApplication
             return;
         }
 
+        // Run all registered bootstrappers (including those added by packages)
+        $this->bootstrap();
+
         // Discover and load modules (they register their own providers)
         if ($this->moduleManager) {
             $this->moduleManager->discover();
@@ -140,7 +144,12 @@ class Application extends BaseApplication
             return $default;
         }
 
-        $config = require $configPath;
+        if (isset($this->config[$file])) {
+            $config = $this->config[$file];
+        } else {
+            $config = require $configPath;
+            $this->config[$file] = $config;
+        }
         
         foreach ($keys as $segment) {
             if (!is_array($config) || !array_key_exists($segment, $config)) {
