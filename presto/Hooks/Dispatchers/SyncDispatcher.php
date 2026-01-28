@@ -16,9 +16,31 @@ class SyncDispatcher implements ActionDispatcherInterface
         $this->app = $app;
     }
 
+    protected array $actionCounts = [];
+
     public function dispatch(string $hook, array $hookData, array $args): void
     {
+        $this->incrementRunCount($hook);
+        
         $this->app->make(\PrestoWorld\Hooks\HookManager::class)
             ->executeDispatchedAction($hookData, $args);
+    }
+    
+    public function getRunCount(string $hook): int
+    {
+        return $this->actionCounts[$hook] ?? 0;
+    }
+
+    public function incrementRunCount(string $hook): void
+    {
+        if (!isset($this->actionCounts[$hook])) {
+            $this->actionCounts[$hook] = 0;
+        }
+        $this->actionCounts[$hook]++;
+    }
+
+    public function flush(): void
+    {
+        $this->actionCounts = [];
     }
 }

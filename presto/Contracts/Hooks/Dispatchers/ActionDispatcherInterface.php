@@ -11,4 +11,8 @@ interface ActionDispatcherInterface
      * The hook param contains metadata like 'callback', 'state_type', etc.
      */
     public function dispatch(string $hook, array $hookData, array $args): void;
+
+    public function getRunCount(string $hook): int;
+    public function incrementRunCount(string $hook): void;
+    public function flush(): void;
 }

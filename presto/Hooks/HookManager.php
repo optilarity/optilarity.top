@@ -219,9 +219,6 @@ class HookManager
         $this->instancePool = [];
     }
 
-    /**
-     * Thực thi trực tiếp dành cho Dispatchers (Sync or Task Worker).
-     */
     public function executeDispatchedAction(array $meta, array $args): mixed
     {
         $prototype = $meta['callback'];
@@ -229,5 +226,24 @@ class HookManager
         $stateKey  = md5($prototype);
 
         return $this->runner->run($prototype, $args, $stateKey, $stateType);
+    }
+
+    /**
+     * Check how many times an action has been fired.
+     */
+    public function didAction(string $hook): int
+    {
+        if ($this->dispatcher instanceof \PrestoWorld\Contracts\Hooks\Dispatchers\ActionDispatcherInterface) {
+            return $this->dispatcher->getRunCount($hook);
+        }
+        return 0;
+    }
+
+    /**
+     * Check if an action has been registered.
+     */
+    public function hasAction(string $hook, $function_to_check = false): int|bool
+    {
+        return $this->registry->has('action', $hook);
     }
 }
