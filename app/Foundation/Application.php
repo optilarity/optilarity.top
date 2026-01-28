@@ -184,4 +184,12 @@ class Application extends BaseApplication
     {
         return $this->basePath('storage/logs/prestoworld.log');
     }
+
+    /**
+     * "Extend" an abstract type in the container.
+     */
+    public function extend(string $abstract, \Closure $closure): void
+    {
+        parent::extend($abstract, $closure);
+    }
 }

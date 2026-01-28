@@ -13,17 +13,23 @@ if (!function_exists('env')) {
         if ($value === false) {
             return $default;
         }
+
+        if (!is_string($value)) {
+            return $value;
+        }
         
+        $lowercaseValue = strtolower($value);
+
         // Convert string booleans
-        if (in_array(strtolower($value), ['true', '(true)'], true)) {
+        if (in_array($lowercaseValue, ['true', '(true)'], true)) {
             return true;
         }
         
-        if (in_array(strtolower($value), ['false', '(false)'], true)) {
+        if (in_array($lowercaseValue, ['false', '(false)'], true)) {
             return false;
         }
         
-        if (in_array(strtolower($value), ['null', '(null)'], true)) {
+        if (in_array($lowercaseValue, ['null', '(null)'], true)) {
             return null;
         }
         
