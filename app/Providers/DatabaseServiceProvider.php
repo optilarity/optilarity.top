@@ -35,23 +35,13 @@ class DatabaseServiceProvider extends ServiceProvider
             $config = new DatabaseConfig($dbConfig);
             $manager = new DatabaseManager($config);
 
-            // Fix for WordPress legacy tables with zero dates (0000-00-00 00:00:00)
-            // SQLSTATE[42000]: 1067 Invalid default value for 'user_registered'
-            if ($driver === 'mysql' || $driver === 'mariadb') {
-                $db = $manager->database($driver);
-                $db->execute("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
-                $db->execute("SET sql_mode=(SELECT REPLACE(@@sql_mode,'NO_ZERO_DATE',''))");
-                $db->execute("SET sql_mode=(SELECT REPLACE(@@sql_mode,'NO_ZERO_IN_DATE',''))");
-                $db->execute("SET sql_mode=(SELECT REPLACE(@@sql_mode,'STRICT_TRANS_TABLES',''))");
-                $db->execute("SET sql_mode=(SELECT REPLACE(@@sql_mode,'STRICT_ALL_TABLES',''))");
-            }
-
             // Intercept queries for Statistics/Debug Bar
             if (env('APP_DEBUG_BAR', false) && $app->has(\App\Foundation\Debug\DebugBar::class)) {
                 $manager->setLogger($app->make(\App\Foundation\Database\QueryInterceptor::class));
             }
 
-            return $manager;
+            // Wrap in proxy for lazy connection initialization
+            return new \App\Foundation\Database\DatabaseManagerProxy($manager, $driver);
         });
 
         // 2. Register Database Interface (Default Connection)
@@ -98,6 +88,17 @@ class DatabaseServiceProvider extends ServiceProvider
         // 3. Register Entity Manager
         $this->singleton(\Cycle\ORM\EntityManagerInterface::class, function ($app) {
             return new \Cycle\ORM\EntityManager($app->make(ORMInterface::class));
+        });
+
+        // 4. Register cleanup callback for long-running environments
+        $app = $this->app;
+        $this->app->terminating(function () use ($app) {
+            if ($app->isLongRunning()) {
+                $dbal = $app->make(DatabaseProviderInterface::class);
+                if ($dbal instanceof \App\Foundation\Database\DatabaseManagerProxy) {
+                    $dbal->disconnect();
+                }
+            }
         });
     }
 

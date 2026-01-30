@@ -22,6 +22,8 @@ class SwooleTaskDispatcher implements ActionDispatcherInterface
 
     public function dispatch(string $hook, array $hookData, array $args): void
     {
+        $this->incrementRunCount($hook);
+        
         if ($this->server instanceof SwooleHttpServer || $this->server instanceof SwooleServer) {
             // Push to Task Worker
             $this->server->task([
@@ -36,5 +38,28 @@ class SwooleTaskDispatcher implements ActionDispatcherInterface
         // Fallback to sync if server is not capable
         $this->app->make(\PrestoWorld\Hooks\HookManager::class)
             ->executeDispatchedAction($hookData, $args);
+    }
+    
+    protected array $actionCounts = [];
+
+    public function getRunCount(string $hook): int
+    {
+        // Note: Counting in Swoole Task Dispatcher might be tricky across processes
+        // Ideally should use Atomic or Table for accurate counts.
+        // For now, local process count.
+        return $this->actionCounts[$hook] ?? 0;
+    }
+
+    public function incrementRunCount(string $hook): void
+    {
+        if (!isset($this->actionCounts[$hook])) {
+            $this->actionCounts[$hook] = 0;
+        }
+        $this->actionCounts[$hook]++;
+    }
+
+    public function flush(): void
+    {
+        $this->actionCounts = [];
     }
 }
