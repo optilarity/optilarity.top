@@ -44,7 +44,7 @@ return [
         Witals\Framework\Auth\AuthServiceProvider::class,
         
         // WordPress Bridge (loads helpers early)
-        Prestoworld\Bridge\WordPress\Providers\WordPressServiceProvider::class,
+        PrestoWorld\Bridge\WordPress\Providers\WordPressServiceProvider::class,
         
         App\Providers\RouteServiceProvider::class,
         App\Providers\ViewServiceProvider::class,

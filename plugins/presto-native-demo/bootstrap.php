@@ -2,7 +2,7 @@
 
 namespace Plugins\NativeDemo;
 
-use Prestoworld\Bridge\WordPress\Contracts\NativeComponentInterface;
+use PrestoWorld\Bridge\WordPress\Contracts\NativeComponentInterface;
 use Witals\Framework\Http\Response;
 
 /**
