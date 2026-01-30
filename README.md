@@ -67,4 +67,12 @@ Developers can simply generate a new module:
 php witals make:module RealEstate
 ```
 
-(Note: `make:module` command implementation is in progress).
+## 💖 Support PrestoWorld
+
+PrestoWorld is an ambitious open-source project aimed at redefining the CMS landscape. If you find value in what we are building, please consider supporting the development:
+
+- **Sponsor on GitHub**: [github.com/sponsors/puleeno](https://github.com/sponsors/puleeno)
+- **Buy Me a Coffee**: [buymeacoffee.com/puleeno](https://buymeacoffee.com/puleeno)
+- **Ko-fi**: [ko-fi.com/puleeno](https://ko-fi.com/puleeno)
+
+Your support helps us maintain the core framework and develop more specialized industry modules.
