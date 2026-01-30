@@ -71,6 +71,16 @@ if (!function_exists('base_path')) {
     }
 }
 
+if (!function_exists('storage_path')) {
+    /**
+     * Get storage path
+     */
+    function storage_path(string $path = ''): string
+    {
+        return app()->basePath('storage/' . $path);
+    }
+}
+
 if (!function_exists('path_join')) {
     /**
      * Join paths safely across OS
