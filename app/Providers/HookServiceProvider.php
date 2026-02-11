@@ -18,10 +18,7 @@ class HookServiceProvider extends ServiceProvider
         // 1. Determine Registry Implementation (Strategy Pattern via Config)
         $this->app->singleton(\PrestoWorld\Contracts\Hooks\Registries\HookRegistryInterface::class, function ($app) {
             // Auto-detect if not set
-            $default = 'memory';
-            if (extension_loaded('pdo_sqlite')) $default = 'sqlite';
-            
-            $driver = env('HOOK_REGISTRY_DRIVER', $default); 
+            $driver = env('HOOK_REGISTRY_DRIVER', 'memory'); 
 
             switch ($driver) {
                 case 'redis':
@@ -118,22 +115,32 @@ class HookServiceProvider extends ServiceProvider
             $hooks = $this->app->make('hooks');
 
             // 1. Filter: Modify Title
-            $hooks->addFilter('home_page_title', function($title) {
-                return $title . ' - Powered by PrestoWorld Hooks';
-            });
+            if (!$hooks->hasFilter('home_page_title')) {
+                $hooks->addFilter('home_page_title', function($title) {
+                    if (str_contains($title, 'Powered by PrestoWorld Hooks')) {
+                        return $title;
+                    }
+                    return $title . ' - Powered by PrestoWorld Hooks';
+                });
+            }
 
             // 2. Filter: Inject content into Header
-            $runtime = $this->app->isRoadRunner() ? 'RoadRunner' : (
-                $this->app->isOpenSwoole() ? 'OpenSwoole' : (
-                $this->app->isSwoole() ? 'Swoole' : 'Traditional Web Server'
-            ));
-            
-            $hooks->addFilter('home_page_content', function($html) use ($runtime) {
-                 return str_replace('</body>', '<div style="background:linear-gradient(90deg, #ff00cc, #333399); color:white; padding:10px; text-align:center; position:fixed; top:0; left:0; width:100%; z-index:99999; font-weight:bold; box-shadow:0 2px 10px rgba(0,0,0,0.5);">⚡ PrestoWorld Hooks Active via ' . $runtime . '!</div></body>', $html);
-            });
+            if (!$hooks->hasFilter('home_page_content')) {
+                $runtime = $this->app->isRoadRunner() ? 'RoadRunner' : (
+                    $this->app->isOpenSwoole() ? 'OpenSwoole' : (
+                    $this->app->isSwoole() ? 'Swoole' : 'Traditional Web Server'
+                ));
+                
+                $hooks->addFilter('home_page_content', function($html) use ($runtime) {
+                     if (str_contains($html, 'PrestoWorld Hooks Active')) {
+                         return $html;
+                     }
+                     return str_replace('</body>', '<div style="background:linear-gradient(90deg, #ff00cc, #333399); color:white; padding:10px; text-align:center; position:fixed; top:0; left:0; width:100%; z-index:99999; font-weight:bold; box-shadow:0 2px 10px rgba(0,0,0,0.5);">⚡ PrestoWorld Hooks Active via ' . $runtime . '!</div></body>', $html);
+                });
+            }
 
             // 3. Admin Simulation: Register a widget and a menu page using WP helper style
-            if (function_exists('wp_add_dashboard_widget')) {
+            if (function_exists('wp_add_dashboard_widget') && !$hooks->hasAction('wp_dashboard_setup')) {
                 wp_add_dashboard_widget('presto_welcome_widget', 'PrestoWorld Welcome', function() {
                     echo "<div class='premium-card' style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px;'>
                             <h4>Modern Hybrid Rendering</h4>

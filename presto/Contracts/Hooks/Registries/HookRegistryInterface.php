@@ -28,4 +28,9 @@ interface HookRegistryInterface
      * Remove all hooks for a given tag, optionally filtered by priority.
      */
     public function clear(string $type, string $hook, ?int $priority = null): void;
+
+    /**
+     * Check if a hook has any registered callbacks.
+     */
+    public function has(string $type, string $hook): bool;
 }

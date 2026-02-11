@@ -69,4 +69,14 @@ class SwooleTableRegistry implements HookRegistryInterface
             }
         }
     }
+
+    public function has(string $type, string $hook): bool
+    {
+        foreach ($this->table as $row) {
+            if ($row['type'] === $type && $row['hook_name'] === $hook) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

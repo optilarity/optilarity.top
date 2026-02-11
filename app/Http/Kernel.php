@@ -226,17 +226,7 @@ class Kernel implements KernelContract
             // Apply Native Filter to Content
             $html = $hooks->applyFilters('home_page_content', $html);
 
-            // Inject Debug Bar
-            if (env('APP_DEBUG_BAR', false)) {
-                $debugBar = $this->app->make(\App\Foundation\Debug\DebugBar::class);
-                $debugBarHtml = $debugBar->render();
-                
-                if (str_contains($html, '</body>')) {
-                    $html = str_replace('</body>', $debugBarHtml . '</body>', $html);
-                } else {
-                    $html .= $debugBarHtml;
-                }
-            }
+
 
             // Apply GLOBAL Filter as the very last step (MU-Plugins, etc)
             $html = $hooks->applyFilters('presto.response_body', $html);

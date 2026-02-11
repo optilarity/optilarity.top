@@ -54,4 +54,9 @@ class ArrayRegistry implements HookRegistryInterface
             }
         }
     }
+
+    public function has(string $type, string $hook): bool
+    {
+        return !empty($this->registry[$type][$hook]);
+    }
 }

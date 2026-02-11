@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PrestoWorld\Hooks\Registries;
 
 use PrestoWorld\Contracts\Hooks\Registries\HookRegistryInterface;
+use PrestoWorld\Contracts\Hooks\HookStateType;
 use MongoDB\Client;
 use MongoDB\Collection;
 
@@ -24,86 +25,57 @@ class MongoRegistry implements HookRegistryInterface
         ]);
         $this->collection = $this->client->selectDatabase($database)->selectCollection($collection);
         
-        // Ensure index for fast lookup
-        // We only try to create index once, catch error if already exists or permissions issue
         try {
-            $this->collection->createIndex(['hook_name' => 1, 'priority' => 1]);
-        } catch (\Throwable $e) {
-            // Ignore index creation errors in runtime
-        }
+            $this->collection->createIndex(['type' => 1, 'hook' => 1, 'priority' => 1]);
+        } catch (\Throwable $e) {}
     }
 
-    public function register(string $hook, callable $callback, int $priority = 10, int $acceptedArgs = 1): void
+    public function set(string $type, string $hook, string $callback, int $priority, HookStateType $stateType = HookStateType::VOLATILE): void
     {
-        $callbackId = $this->generateCallbackId($callback);
-        if (!$callbackId) return;
-
-        // In Mongo, we can store structured documents
-        // We use updateOne with upsert to avoid duplicates for the same callback
         $this->collection->updateOne(
-            [
-                'hook_name' => $hook,
-                'callback_id' => $callbackId,
-                'priority' => $priority
-            ],
-            [
-                '$set' => [
-                    'hook_name' => $hook,
-                    'callback_id' => $callbackId,
-                    'priority' => $priority,
-                    'accepted_args' => $acceptedArgs,
-                    'updated_at' => new \MongoDB\BSON\UTCDateTime()
-                ]
-            ],
+            ['type' => $type, 'hook' => $hook, 'callback' => $callback, 'priority' => $priority],
+            ['$set' => [
+                'type' => $type,
+                'hook' => $hook,
+                'callback' => $callback,
+                'priority' => $priority,
+                'state_type' => $stateType->value
+            ]],
             ['upsert' => true]
         );
     }
 
-    public function getCallbacks(string $hook): array
+    public function get(string $type, string $hook): array
     {
-        // Fetch sorted by priority ASC
         $cursor = $this->collection->find(
-            ['hook_name' => $hook],
+            ['type' => $type, 'hook' => $hook],
             ['sort' => ['priority' => 1]]
         );
 
-        $callbacks = [];
-        foreach ($cursor as $doc) {
-            // Transform back to array format expected by Manager
-            $callbacks[] = [
-                'callback' => $doc['callback_id'],
-                'priority' => $doc['priority'],
-                'accepted_args' => $doc['accepted_args'] ?? 1
-            ];
-        }
-        return $callbacks;
+        return iterator_to_array($cursor);
     }
 
-    public function remove(string $hook, callable $callback, int $priority = 10): void
+    public function remove(string $type, string $hook, string $callback, int $priority): void
     {
-        $callbackId = $this->generateCallbackId($callback);
-        if (!$callbackId) return;
-
         $this->collection->deleteOne([
-            'hook_name' => $hook,
-            'callback_id' => $callbackId,
+            'type' => $type,
+            'hook' => $hook,
+            'callback' => $callback,
             'priority' => $priority
         ]);
     }
 
-    public function has(string $hook): bool
+    public function clear(string $type, string $hook, ?int $priority = null): void
     {
-        $count = $this->collection->countDocuments(['hook_name' => $hook]);
-        return $count > 0;
+        $filter = ['type' => $type, 'hook' => $hook];
+        if ($priority !== null) {
+            $filter['priority'] = $priority;
+        }
+        $this->collection->deleteMany($filter);
     }
 
-    protected function generateCallbackId(callable $callback): ?string
+    public function has(string $type, string $hook): bool
     {
-        if (is_string($callback)) return $callback;
-        if (is_array($callback)) {
-            $class = is_object($callback[0]) ? get_class($callback[0]) : $callback[0];
-            return $class . '::' . $callback[1];
-        }
-        return null; 
+        return $this->collection->countDocuments(['type' => $type, 'hook' => $hook]) > 0;
     }
 }

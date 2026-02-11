@@ -246,4 +246,12 @@ class HookManager
     {
         return $this->registry->has('action', $hook);
     }
+
+    /**
+     * Check if a filter has been registered.
+     */
+    public function hasFilter(string $hook, $function_to_check = false): int|bool
+    {
+        return $this->registry->has('filter', $hook);
+    }
 }

@@ -78,4 +78,10 @@ class APCuRegistry implements HookRegistryInterface
             apcu_store($key, array_values($hooks));
         }
     }
+
+    public function has(string $type, string $hook): bool
+    {
+        $key = $this->prefix . $type . ':' . $hook;
+        return apcu_exists($key);
+    }
 }
